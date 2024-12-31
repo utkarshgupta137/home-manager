@@ -14,6 +14,7 @@ let
   defaultCacheHome = "${config.home.homeDirectory}/.cache";
   defaultConfigHome = "${config.home.homeDirectory}/.config";
   defaultDataHome = "${config.home.homeDirectory}/.local/share";
+  defaultRuntimeHome = "${config.home.homeDirectory}/.local/run";
   defaultStateHome = "${config.home.homeDirectory}/.local/state";
 
   getEnvFallback = name: fallback:
@@ -76,6 +77,27 @@ in {
       '';
     };
 
+    runtimeFile = mkOption {
+      type = fileType "xdg.runtimeFile" "<varname>xdg.runtimeHome</varname>"
+        cfg.runtimeHome;
+      default = { };
+      description = ''
+        Attribute set of files to link into the user's XDG
+        runtime home.
+      '';
+    };
+
+    runtimeHome = mkOption {
+      type = types.path;
+      defaultText = "~/.local/run";
+      apply = toString;
+      description = ''
+        Absolute path to directory holding application runtime files.
+
+        Sets `XDG_RUNTIME_HOME` for the user if `xdg.enable` is set `true`.
+      '';
+    };
+
     stateFile = mkOption {
       type = fileType "xdg.stateFile" "<varname>xdg.stateHome</varname>"
         cfg.stateHome;
@@ -104,12 +126,14 @@ in {
         XDG_CACHE_HOME = cfg.cacheHome;
         XDG_CONFIG_HOME = cfg.configHome;
         XDG_DATA_HOME = cfg.dataHome;
+        XDG_RUNTIME_HOME = cfg.runtimeHome;
         XDG_STATE_HOME = cfg.stateHome;
       };
     in mkIf cfg.enable {
       xdg.cacheHome = mkDefault defaultCacheHome;
       xdg.configHome = mkDefault defaultConfigHome;
       xdg.dataHome = mkDefault defaultDataHome;
+      xdg.runtimeHome = mkDefault defaultRuntimeHome;
       xdg.stateHome = mkDefault defaultStateHome;
 
       home.sessionVariables = variables;
@@ -131,6 +155,7 @@ in {
       xdg.cacheHome = mkDefault defaultCacheHome;
       xdg.configHome = mkDefault defaultConfigHome;
       xdg.dataHome = mkDefault defaultDataHome;
+      xdg.runtimeHome = mkDefault defaultRuntimeHome;
       xdg.stateHome = mkDefault defaultStateHome;
     })
 
@@ -140,6 +165,8 @@ in {
           cfg.configFile)
         (mapAttrs' (name: file: nameValuePair "${cfg.dataHome}/${name}" file)
           cfg.dataFile)
+        (mapAttrs' (name: file: nameValuePair "${cfg.runtimeHome}/${name}" file)
+          cfg.runtimeFile)
         (mapAttrs' (name: file: nameValuePair "${cfg.stateHome}/${name}" file)
           cfg.stateFile)
         { "${cfg.cacheHome}/.keep".text = ""; }
