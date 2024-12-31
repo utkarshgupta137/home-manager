@@ -211,6 +211,8 @@ in {
         };
       })
       (mkIf isDarwin {
+        programs.atuin.settings = { daemon = { socket_path = "${config.xdg.runtimeHome}/atuin.sock"; }; };
+
         launchd.agents.atuin-daemon = {
           enable = true;
           config = {
